@@ -1,0 +1,45 @@
+# Sync snippet-source-gitpage  snippet-source-gitpage
+
+name: Sync Notes to GitPage Posts
+
+on:
+  push:
+    branches: [ "main" ]
+  
+  workflow_dispatch:
+
+env:
+  USER: grebeci
+  USER_EMAIL: 1733520818@qq.com
+  SOURCE-REPO: grebeci/snippet-source-gitpage
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Repo
+        uses: actions/checkout@v2
+        with:
+          path: 'source'
+
+      - name: Checkout GitPage Repo
+        uses: actions/checkout@v2
+        with:
+          repository: ${{ env.SOURCE-REPO }}
+          token: ${{ secrets.TOKEN_SNIPPET_SOURCE }}
+          path: 'gitpage'
+
+      - name: Sync Files
+        run: |
+          rsync -av --exclude '.git/' source/ gitpage/source/_posts/
+      
+      - name: Commit and Push Changes
+        run: |
+          cd gitpage
+          CURRENT_DATE=$(date "+%Y-%m-%d %H:%M:%S")
+          git config user.name ${{ env.USER }}
+          git config user.email ${{ env.USER_EMAIL }}
+          git add .
+          git commit -m "Updated notes from my-notes repository on $CURRENT_DATE"
+          git push
+
